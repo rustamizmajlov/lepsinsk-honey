@@ -39,7 +39,7 @@
 Нужен установленный [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
 ```bash
-git clone https://github.com/<your-username>/skillswap.git
+git clone https://github.com/rustamizmajlov/skillswap.git
 cd skillswap
 cp .env.example .env        # необязательно: значения по умолчанию уже работают
 docker compose up --build

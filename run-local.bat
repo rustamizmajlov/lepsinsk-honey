@@ -1,10 +1,10 @@
 @echo off
 cd /d "%~dp0"
-title SkillSwap
+title Lepsinsk Honey
 
-rem Runs SkillSwap without Docker (SQLite) and opens it in Brave or the default browser.
+rem Runs the Lepsinsk honey shop without Docker (SQLite) and opens it in Brave or the default browser.
 rem The venv lives outside the project so the project folder stays clean.
-set "VENV=%USERPROFILE%\.venvs\skillswap"
+set "VENV=%USERPROFILE%\.venvs\lepsinsk-honey"
 
 if not exist "%VENV%\Scripts\python.exe" (
   echo Creating virtual environment...

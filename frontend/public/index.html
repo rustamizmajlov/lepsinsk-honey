@@ -3,27 +3,51 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SkillSwap — банк времени</title>
+  <title>Лепсинский мёд — с пасек Джунгарского Алатау</title>
+  <meta name="description" content="Горный и луговой мёд с пасек села Лепсинск. Доставка по Казахстану.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 90,27 90,73 50,96 10,73 10,27' fill='%23E9A23B'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <header class="topbar">
-    <a href="#/" class="logo">⇄ SkillSwap</a>
+    <a href="#/" class="logo">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill="#E9A23B"/><polygon points="50,24 72,37 72,63 50,76 28,63 28,37" fill="#FFF3D6"/></svg>
+      <span>Лепсинский мёд<small>пасеки Джунгарского Алатау</small></span>
+    </a>
+    <button class="burger" id="burger" aria-label="Меню">☰</button>
     <nav id="nav"></nav>
   </header>
 
-  <main id="app" class="container"></main>
+  <main id="app"></main>
 
   <div id="modal" class="modal hidden">
     <div class="modal-card">
-      <button class="modal-close" data-close>&times;</button>
+      <button class="modal-close" data-close aria-label="Закрыть">&times;</button>
       <div id="modal-body"></div>
     </div>
   </div>
 
   <div id="toast" class="toast hidden"></div>
 
-  <footer class="footer">SkillSwap · обменивайтесь знаниями, а не деньгами · <a href="/api/docs" target="_blank">API</a></footer>
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>
+        <b>Лепсинский мёд</b>
+        <p>Учебный проект интернет-магазина. Село Лепсинск, Сарканский район, область Жетысу, Казахстан.</p>
+      </div>
+      <div>
+        <b>Покупателям</b>
+        <p><a href="#/catalog">Каталог</a> · <a href="#/quiz">Подбор мёда</a> · <a href="#/cart">Корзина</a></p>
+      </div>
+      <div>
+        <b>Разработчикам</b>
+        <p><a href="/api/docs" target="_blank">Документация API</a></p>
+      </div>
+    </div>
+  </footer>
 
   <script src="/app.js"></script>
 </body>

@@ -1,4 +1,4 @@
-"""Smoke tests for the whole API flow.
+"""End-to-end API test: auth, product CRUD, order CRUD with stock, admin.
 
 Run locally against SQLite:
     DATABASE_URL=sqlite:///./test.db pytest backend/tests
@@ -22,65 +22,99 @@ def auth(client, username, password):
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
 
+def stock(client, product_id):
+    return client.get(f"/api/products/{product_id}").json()["stock"]
+
+
 def test_full_flow():
     Base.metadata.drop_all(engine)
     with TestClient(app) as c:
         assert c.get("/api/health").json() == {"status": "ok"}
 
-        # registration + duplicate
-        r = c.post("/api/auth/register", json={"username": "kate", "email": "kate@ex.com", "password": "secret1"})
-        assert r.status_code == 201 and r.json()["credits"] == 3 and r.json()["role"] == "user"
-        assert c.post("/api/auth/register", json={"username": "kate", "email": "k2@ex.com", "password": "secret1"}).status_code == 409
-        assert c.post("/api/auth/login", json={"username": "kate", "password": "wrong"}).status_code == 401
-
-        kate = auth(c, "kate", "secret1")
-        anna = auth(c, "anna", "demo123")
+        # --- auth ---
+        r = c.post("/api/auth/register", json={
+            "username": "aliya", "email": "aliya@example.com", "password": "secret1", "full_name": "Алия",
+        })
+        assert r.status_code == 201 and r.json()["role"] == "user"
+        assert c.post("/api/auth/register", json={
+            "username": "aliya", "email": "x@example.com", "password": "secret1",
+        }).status_code == 409
+        assert c.post("/api/auth/login", json={"username": "aliya", "password": "bad"}).status_code == 401
+        aliya = auth(c, "aliya", "secret1")
         admin = auth(c, "admin", "admin12345")
-        assert c.get("/api/auth/me").status_code == 401
+        r = c.patch("/api/auth/me", headers=aliya, json={"phone": "+77011234567", "address": "Талдыкорган"})
+        assert r.json()["phone"] == "+77011234567"
 
-        # Skill CRUD
-        assert c.post("/api/skills", json={"title": "Шахматы", "category": "Игры"}).status_code == 401
-        r = c.post("/api/skills", headers=kate, json={"title": "Шахматы", "category": "Игры", "hours_cost": 1})
+        # --- products: public read, admin-only write ---
+        products = c.get("/api/products").json()
+        assert len(products) == 8
+        assert "Горный" in c.get("/api/products/varieties").json()
+        assert len(c.get("/api/products", params={"q": "донник"}).json()) == 1
+        assert all(p["price"] <= 5000 for p in c.get("/api/products", params={"max_price": 5000}).json())
+        new = {"name": "Акациевый", "variety": "Луговой", "price": 6800, "stock": 5, "weight_g": 1000}
+        assert c.post("/api/products", headers=aliya, json=new).status_code == 403
+        r = c.post("/api/products", headers=admin, json=new)
         assert r.status_code == 201
-        chess = r.json()["id"]
-        assert c.get(f"/api/skills/{chess}").json()["owner"]["username"] == "kate"
-        assert len(c.get("/api/skills", params={"q": "PYTHON"}).json()) == 1
-        assert len(c.get("/api/skills", params={"category": "Игры"}).json()) == 1
-        assert c.put(f"/api/skills/{chess}", headers=anna, json={"title": "hack"}).status_code == 403
-        r = c.put(f"/api/skills/{chess}", headers=kate, json={"level": "expert"})
-        assert r.json()["level"] == "expert"
-        assert "Игры" in c.get("/api/skills/categories").json()
+        acacia = r.json()["id"]
+        assert c.put(f"/api/products/{acacia}", headers=admin, json={"price": 7000}).json()["price"] == 7000
+        assert c.put(f"/api/products/{acacia}", headers=admin, json={"is_active": False}).status_code == 200
+        assert c.get(f"/api/products/{acacia}").status_code == 404  # hidden from buyers
+        assert c.get(f"/api/products/{acacia}", headers=admin).status_code == 200
+        assert c.delete(f"/api/products/{acacia}", headers=admin).status_code == 204
 
-        # Swap CRUD + business rules
-        english = next(s for s in c.get("/api/skills").json() if s["owner"]["username"] == "anna")["id"]
-        assert c.post("/api/swaps", headers=kate, json={"skill_id": chess}).status_code == 400  # own skill
-        assert c.post("/api/swaps", headers=kate, json={"skill_id": english, "hours": 10}).status_code == 400  # credits
-        r = c.post("/api/swaps", headers=kate, json={"skill_id": english, "hours": 2, "message": "Hi"})
-        assert r.status_code == 201 and r.json()["total_cost"] == 2
-        swap = r.json()["id"]
-        assert c.post("/api/swaps", headers=kate, json={"skill_id": english}).status_code == 409
-        assert c.put(f"/api/swaps/{swap}", headers=kate, json={"message": "Hello!"}).json()["message"] == "Hello!"
-        assert c.put(f"/api/swaps/{swap}", headers=kate, json={"status": "accepted"}).status_code == 403
-        assert len(c.get("/api/swaps", headers=anna, params={"box": "incoming"}).json()) == 1
-        assert c.put(f"/api/swaps/{swap}", headers=anna, json={"status": "accepted"}).json()["status"] == "accepted"
-        assert c.delete(f"/api/swaps/{swap}", headers=kate).status_code == 400
-        assert c.put(f"/api/swaps/{swap}", headers=kate, json={"status": "completed"}).json()["status"] == "completed"
-        assert c.get("/api/auth/me", headers=kate).json()["credits"] == 1
-        assert c.get("/api/auth/me", headers=anna).json()["credits"] == 5
+        # --- orders: create reserves stock ---
+        mountain = next(p for p in products if p["variety"] == "Горный" and p["weight_g"] == 1000)
+        before = stock(c, mountain["id"])
+        order_body = {
+            "items": [{"product_id": mountain["id"], "quantity": 2}],
+            "customer_name": "Алия", "phone": "+77011234567", "address": "Талдыкорган", "delivery": "post",
+        }
+        assert c.post("/api/orders", json=order_body).status_code == 401
+        too_many = {**order_body, "items": [{"product_id": mountain["id"], "quantity": before + 1}]}
+        assert c.post("/api/orders", headers=aliya, json=too_many).status_code == 400
+        assert c.post("/api/orders", headers=aliya, json={**order_body, "address": ""}).status_code == 400
+        r = c.post("/api/orders", headers=aliya, json=order_body)
+        assert r.status_code == 201, r.text
+        order = r.json()
+        assert order["items_total"] == 2 * mountain["price"] and order["delivery_price"] == 1500
+        assert stock(c, mountain["id"]) == before - 2
 
-        # delete a pending swap
-        r = c.post("/api/swaps", headers=anna, json={"skill_id": chess})
-        assert c.delete(f"/api/swaps/{r.json()['id']}", headers=anna).status_code == 204
+        # read: own orders only
+        assert len(c.get("/api/orders", headers=aliya).json()) == 1
+        demo = auth(c, "demo", "demo123")
+        assert c.get(f"/api/orders/{order['id']}", headers=demo).status_code == 404
 
-        # admin
-        assert c.get("/api/admin/users", headers=kate).status_code == 403
-        users = c.get("/api/admin/users", headers=admin).json()
-        kate_id = next(u["id"] for u in users if u["username"] == "kate")
-        assert c.patch(f"/api/admin/users/{kate_id}", headers=admin, json={"credits": 10}).json()["credits"] == 10
+        # update: change quantity -> stock is recalculated; enough for free delivery
+        r = c.put(f"/api/orders/{order['id']}", headers=aliya,
+                  json={"items": [{"product_id": mountain["id"], "quantity": 3}], "delivery": "courier"})
+        assert r.status_code == 200, r.text
+        assert r.json()["delivery_price"] == 0  # 3 * 7500 >= 20000
+        assert stock(c, mountain["id"]) == before - 3
+
+        # buyer cannot confirm; admin moves the order along
+        assert c.put(f"/api/orders/{order['id']}", headers=aliya, json={"status": "confirmed"}).status_code == 400
+        assert c.put(f"/api/orders/{order['id']}", headers=admin, json={"status": "confirmed"}).json()["status"] == "confirmed"
+        assert c.put(f"/api/orders/{order['id']}", headers=aliya, json={"comment": "x"}).status_code == 400
+        assert c.delete(f"/api/orders/{order['id']}", headers=aliya).status_code == 400
+        assert c.put(f"/api/orders/{order['id']}", headers=admin, json={"status": "delivered"}).status_code == 400
+        assert c.put(f"/api/orders/{order['id']}", headers=admin, json={"status": "shipped"}).status_code == 200
+        assert c.put(f"/api/orders/{order['id']}", headers=admin, json={"status": "delivered"}).status_code == 200
+
+        # cancel returns stock, then the buyer deletes the cancelled order
+        r = c.post("/api/orders", headers=aliya, json={**order_body, "delivery": "pickup", "address": ""})
+        second = r.json()
+        assert second["delivery_price"] == 0
+        assert c.put(f"/api/orders/{second['id']}", headers=aliya, json={"status": "cancelled"}).status_code == 200
+        assert stock(c, mountain["id"]) == before - 3
+        assert c.delete(f"/api/orders/{second['id']}", headers=aliya).status_code == 204
+
+        # --- admin ---
+        assert c.get("/api/admin/stats", headers=aliya).status_code == 403
         stats = c.get("/api/admin/stats", headers=admin).json()
-        assert stats["completed_swaps"] == 1 and stats["hours_exchanged"] == 2
-        assert c.delete(f"/api/skills/{chess}", headers=admin).status_code == 204
-        assert c.get(f"/api/skills/{chess}").status_code == 404
-        assert c.patch(f"/api/admin/users/{kate_id}", headers=admin, json={"is_active": False}).status_code == 200
-        assert c.get("/api/auth/me", headers=kate).status_code == 401
-        assert c.delete(f"/api/admin/users/{kate_id}", headers=admin).status_code == 204
+        assert stats["orders"] == 2 and stats["orders_by_status"]["delivered"] == 2
+        assert stats["honey_sold_kg"] == 5.0  # seeded 2 kg + 3 kg
+        users = c.get("/api/admin/users", headers=admin).json()
+        aliya_id = next(u["id"] for u in users if u["username"] == "aliya")
+        assert c.patch(f"/api/admin/users/{aliya_id}", headers=admin, json={"is_active": False}).status_code == 200
+        assert c.get("/api/auth/me", headers=aliya).status_code == 401
+        assert c.delete(f"/api/admin/users/{aliya_id}", headers=admin).status_code == 204

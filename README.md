@@ -1,6 +1,6 @@
-# ⇄ SkillSwap — банк времени для обмена навыками
+# 🍯 Лепсинский мёд — интернет-магазин пасеки
 
-> Учите и учитесь без денег: час вашего занятия = 1 тайм-кредит, который можно потратить на обучение у другого участника.
+> Горный и луговой мёд с семейных пасек села Лепсинск у подножия Джунгарского Алатау (область Жетысу, Казахстан).
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
@@ -8,61 +8,60 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**SkillSwap** — веб-приложение, где люди обмениваются знаниями: программист учит вёрстке, дизайнер — Figma,
-музыкант — гитаре. Вместо денег используются **тайм-кредиты**: их зарабатывают, преподавая, и тратят, обучаясь.
+Веб-приложение для небольшой пасеки: покупатели выбирают мёд по вкусу и высоте пасеки, оформляют заказ
+с доставкой по Казахстану и следят за его статусом. Пасечник ведёт каталог, остатки и заказы и видит статистику сезона.
 
-📄 Подробное описание проекта — [docs/PROJECT.md](docs/PROJECT.md)
+> Учебный проект: пасека, товары, цены и демо-заказ вымышлены.
+
+📄 Описание проекта — [docs/PROJECT.md](docs/PROJECT.md)
 📋 60 use cases (20 MVP) — [docs/USE_CASES.md](docs/USE_CASES.md)
 🔌 REST API — [docs/API.md](docs/API.md)
 
 ## Возможности
 
-- 🔎 Каталог навыков с поиском и фильтрами по категории, уровню и формату
-- 🧑‍🏫 **CRUD навыков**: публикация, редактирование, скрытие, удаление
-- 🤝 **CRUD заявок на обмен**: создание, изменение, принятие/отклонение, отмена, завершение, удаление
-- ⏱ Тайм-кредиты: 3 стартовых, автоматический перевод при завершении занятия, проверка баланса
-- 🔐 Авторизация JWT, роли **user** и **admin**, хеширование паролей bcrypt
-- 🛠 Админ-панель: статистика, управление пользователями (роль, блокировка, баланс), модерация навыков и заявок
-- 🐳 Сервер, база данных и UI — в отдельных Docker-контейнерах
+- 🏔️ Главная с историей села, «годом на пасеке» и горным пейзажем в SVG
+- 🍯 Каталог: поиск, сорта, сортировка по цене, «только в наличии», банки нарисованы цветом конкретного мёда
+- 🧭 **Подбор мёда** — тест из 3 вопросов подбирает сорт по сладости и яркости вкуса
+- 🛒 Корзина без регистрации, три способа доставки, бесплатная доставка от 20 000 ₸
+- 📦 **CRUD заказов**: оформление, просмотр со статусами, изменение и отмена нового заказа, удаление
+- 🧑‍🌾 **CRUD товаров** в панели пасечника: цена, остаток, вкус, высота пасеки, цвет мёда, скрытие с витрины
+- 📊 Статистика: выручка, проданные килограммы, хиты, заканчивающиеся товары
+- 🔐 JWT-авторизация, роли **user** (покупатель) и **admin** (пасечник), пароли в bcrypt
+- 🐳 Сервер, база данных и UI — в отдельных Docker-контейнерах; есть запуск без Docker
 
 ## Стек
 
 | Слой | Технологии |
 |---|---|
-| UI | HTML, CSS, JavaScript (SPA), nginx |
+| UI | HTML, CSS, JavaScript (SPA без сборки), nginx |
 | Сервер | Python 3.12, FastAPI, SQLAlchemy 2, Pydantic 2, PyJWT, bcrypt |
-| База данных | PostgreSQL 16 |
+| База данных | PostgreSQL 16 (в Docker) / SQLite (локальный запуск) |
 | Инфраструктура | Docker, Docker Compose |
 
-## Быстрый старт
-
-Нужен установленный [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+## Быстрый старт (Docker)
 
 ```bash
-git clone https://github.com/rustamizmajlov/skillswap.git
-cd skillswap
+git clone https://github.com/rustamizmajlov/lepsinsk-honey.git
+cd lepsinsk-honey
 cp .env.example .env        # необязательно: значения по умолчанию уже работают
 docker compose up --build
 ```
 
-После запуска:
-
 | Что | Адрес |
 |---|---|
-| Приложение | http://localhost:8080 |
+| Магазин | http://localhost:8080 |
 | Swagger (документация API) | http://localhost:8080/api/docs |
 | Backend напрямую | http://localhost:8000/api/health |
 
-### Запуск без Docker (Windows, одним кликом)
+## Запуск без Docker (Windows, одним кликом)
 
-Если Docker не установлен или не запускается, приложение можно поднять на SQLite вместо PostgreSQL.
 Нужен только [Python 3.10+](https://www.python.org/downloads/).
 
 1. Скачайте проект (`git clone …` или **Code → Download ZIP** и распакуйте).
 2. Дважды кликните **`run-local.bat`**.
 
-Скрипт сам создаст виртуальное окружение в `%USERPROFILE%\.venvs\skillswap`, установит зависимости
-из `requirements-local.txt`, запустит сервер на http://localhost:8080 и откроет его в **Brave**
+Скрипт создаст окружение в `%USERPROFILE%\.venvs\lepsinsk-honey`, установит зависимости
+из `requirements-local.txt`, запустит магазин на SQLite по адресу http://localhost:8080 и откроет его в **Brave**
 (если Brave не установлен — в браузере по умолчанию). Остановить — `Ctrl+C` в окне консоли.
 
 На macOS / Linux:
@@ -73,59 +72,59 @@ pip install -r requirements-local.txt
 python run_local.py
 ```
 
-Данные хранятся в файле `skillswap.db` в корне проекта; удалите его, чтобы начать с чистой базы.
+Данные хранятся в файле `honey.db` в корне проекта; удалите его, чтобы начать с чистой базы.
 
-### Тестовые аккаунты
+## Тестовые аккаунты
 
 | Роль | Логин | Пароль |
 |---|---|---|
-| Администратор | `admin` | `admin12345` |
-| Пользователь | `anna` | `demo123` |
-| Пользователь | `ivan` | `demo123` |
+| Пасечник (admin) | `admin` | `admin12345` |
+| Покупатель (user) | `demo` | `demo123` |
 
-Демо-аккаунты создаются при первом запуске (`SEED_DEMO=true`). Перед реальным использованием
-смените `ADMIN_PASSWORD` и `JWT_SECRET` в `.env`.
+Перед реальным использованием смените `ADMIN_PASSWORD` и `JWT_SECRET` в `.env`.
 
 ### Сценарий для демонстрации
 
-1. Войдите как `ivan` → «Каталог» → «Записаться» на «Разговорный английский» на 2 часа.
-2. Выйдите и войдите как `anna` → «Заявки» → «Входящие» → «Принять» → «Занятие проведено».
-3. Баланс anna вырос до 5 кредитов, у ivan уменьшился до 1.
-4. Войдите как `admin` → «Админка»: статистика показывает 1 завершённый обмен и 2 часа обучения.
+1. Без входа: **Подобрать мёд** → ответьте на 3 вопроса → положите рекомендацию в корзину.
+2. **Корзина** → выберите Казпочту → увидите подсказку до бесплатной доставки → «Войти, чтобы оформить» → `demo`.
+3. Данные получателя подставятся из профиля → «Оформить заказ» → заказ появится в **Мои заказы** со статусом «Новый».
+4. Войдите как `admin` → **Пасечнику**: подтвердите заказ, отправьте, отметьте доставленным; на вкладке «Товары» добавьте новый сорт.
 
 ## Структура проекта
 
 ```
-skillswap/
+lepsinsk-honey/
 ├── backend/                 # сервер (FastAPI)
 │   ├── app/
-│   │   ├── main.py          # точка входа, создание таблиц, сид-данные
-│   │   ├── config.py        # настройки из переменных окружения
-│   │   ├── database.py      # подключение к PostgreSQL
-│   │   ├── models.py        # ORM-модели: User, Skill, SwapRequest
-│   │   ├── schemas.py       # Pydantic-схемы запросов и ответов
+│   │   ├── main.py          # точка входа, создание таблиц, демо-данные
+│   │   ├── config.py        # настройки и тарифы доставки
+│   │   ├── database.py      # подключение к БД
+│   │   ├── models.py        # User, Product, Order, OrderItem
+│   │   ├── schemas.py       # Pydantic-схемы
 │   │   ├── security.py      # bcrypt и JWT
-│   │   ├── deps.py          # текущий пользователь, проверка роли admin
-│   │   └── routers/         # auth, skills, swaps, admin
+│   │   ├── deps.py          # текущий пользователь, проверка роли
+│   │   └── routers/         # auth, products, orders, admin
 │   ├── tests/test_api.py    # сквозной тест API
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/                # UI (nginx + SPA)
 │   ├── public/              # index.html, app.js, styles.css
-│   ├── nginx.conf           # раздача статики и прокси /api → backend
+│   ├── nginx.conf
 │   └── Dockerfile
 ├── docs/                    # PROJECT.md, USE_CASES.md, API.md
 ├── docker-compose.yml
+├── run-local.bat            # запуск без Docker
+├── run_local.py
+├── requirements-local.txt
 ├── .env.example
 └── LICENSE
 ```
 
-## Запуск тестов без Docker
+## Тесты
 
 ```bash
-cd backend
-pip install -r requirements.txt pytest httpx
-DATABASE_URL=sqlite:///./test.db pytest -q
+pip install -r requirements-local.txt pytest httpx
+DATABASE_URL=sqlite:///./test.db pytest -q backend/tests
 ```
 
 ## Лицензия

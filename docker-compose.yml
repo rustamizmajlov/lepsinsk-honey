@@ -1,31 +1,30 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: skillswap-db
+    container_name: honey-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-skillswap}
-      POSTGRES_USER: ${POSTGRES_USER:-skillswap}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-skillswap}
+      POSTGRES_DB: ${POSTGRES_DB:-honey}
+      POSTGRES_USER: ${POSTGRES_USER:-honey}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-honey}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-skillswap} -d ${POSTGRES_DB:-skillswap}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-honey} -d ${POSTGRES_DB:-honey}"]
       interval: 5s
       timeout: 3s
       retries: 10
 
   backend:
     build: ./backend
-    container_name: skillswap-backend
+    container_name: honey-backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-skillswap}:${POSTGRES_PASSWORD:-skillswap}@db:5432/${POSTGRES_DB:-skillswap}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-honey}:${POSTGRES_PASSWORD:-honey}@db:5432/${POSTGRES_DB:-honey}
       JWT_SECRET: ${JWT_SECRET:-change-me-to-a-long-random-secret-string}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@skillswap.dev}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@lepsinsk-honey.kz}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin12345}
-      START_CREDITS: ${START_CREDITS:-3}
       SEED_DEMO: ${SEED_DEMO:-true}
     depends_on:
       db:
@@ -35,7 +34,7 @@ services:
 
   frontend:
     build: ./frontend
-    container_name: skillswap-frontend
+    container_name: honey-frontend
     restart: unless-stopped
     depends_on:
       - backend

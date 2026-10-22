@@ -14,63 +14,84 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(10), default="user")  # user | admin
-    bio: Mapped[str] = mapped_column(Text, default="")
-    credits: Mapped[int] = mapped_column(Integer, default=3)
+    full_name: Mapped[str] = mapped_column(String(120), default="")
+    phone: Mapped[str] = mapped_column(String(30), default="")
+    address: Mapped[str] = mapped_column(String(300), default="")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    skills: Mapped[list["Skill"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
-    requests: Mapped[list["SwapRequest"]] = relationship(
-        back_populates="requester", cascade="all, delete-orphan"
-    )
+    orders: Mapped[list["Order"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
-class Skill(Base):
-    """A skill a member offers to teach."""
+class Product(Base):
+    """A honey or bee product sold by the apiary."""
 
-    __tablename__ = "skills"
+    __tablename__ = "products"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[str] = mapped_column(String(120), index=True)
+    name: Mapped[str] = mapped_column(String(120), index=True)
+    variety: Mapped[str] = mapped_column(String(50), index=True)  # Горный, Луговой, Соты…
     description: Mapped[str] = mapped_column(Text, default="")
-    category: Mapped[str] = mapped_column(String(50), index=True)
-    level: Mapped[str] = mapped_column(String(20), default="beginner")  # beginner | intermediate | expert
-    format: Mapped[str] = mapped_column(String(20), default="online")  # online | offline | both
-    hours_cost: Mapped[int] = mapped_column(Integer, default=1)  # credits per hour of lessons
+    taste: Mapped[str] = mapped_column(String(200), default="")
+    color: Mapped[str] = mapped_column(String(7), default="#E9A23B")  # jar colour in the UI
+    weight_g: Mapped[int] = mapped_column(Integer, default=1000)
+    price: Mapped[int] = mapped_column(Integer)  # tenge
+    stock: Mapped[int] = mapped_column(Integer, default=0)
+    harvest_year: Mapped[int] = mapped_column(Integer, default=2026)
+    altitude_m: Mapped[int] = mapped_column(Integer, default=1000)
+    sweetness: Mapped[int] = mapped_column(Integer, default=3)  # 1..5, used by the honey picker
+    intensity: Mapped[int] = mapped_column(Integer, default=3)  # 1..5, how bold the taste is
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    owner: Mapped[User] = relationship(back_populates="skills")
-    requests: Mapped[list["SwapRequest"]] = relationship(
-        back_populates="skill", cascade="all, delete-orphan"
-    )
 
-
-class SwapRequest(Base):
-    """A request from one member to learn another member's skill for time credits."""
-
-    __tablename__ = "swap_requests"
+class Order(Base):
+    __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    skill_id: Mapped[int] = mapped_column(ForeignKey("skills.id", ondelete="CASCADE"))
-    requester_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    message: Mapped[str] = mapped_column(Text, default="")
-    hours: Mapped[int] = mapped_column(Integer, default=1)
-    # pending | accepted | rejected | completed | cancelled
-    status: Mapped[str] = mapped_column(String(20), default="pending", index=True)
-    scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    # new | confirmed | shipped | delivered | cancelled
+    status: Mapped[str] = mapped_column(String(20), default="new", index=True)
+    customer_name: Mapped[str] = mapped_column(String(120))
+    phone: Mapped[str] = mapped_column(String(30))
+    address: Mapped[str] = mapped_column(String(300), default="")
+    delivery: Mapped[str] = mapped_column(String(20), default="post")  # pickup | post | courier
+    comment: Mapped[str] = mapped_column(Text, default="")
+    items_total: Mapped[int] = mapped_column(Integer, default=0)
+    delivery_price: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    skill: Mapped[Skill] = relationship(back_populates="requests")
-    requester: Mapped[User] = relationship(back_populates="requests")
+    user: Mapped[User] = relationship(back_populates="orders")
+    items: Mapped[list["OrderItem"]] = relationship(
+        back_populates="order", cascade="all, delete-orphan"
+    )
 
     @property
-    def total_cost(self) -> int:
-        return self.hours * self.skill.hours_cost
+    def total(self) -> int:
+        return self.items_total + self.delivery_price
+
+    @property
+    def username(self) -> str:
+        return self.user.username
+
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
+    # Name and price are copied so the order survives product edits and deletion
+    product_id: Mapped[int | None] = mapped_column(
+        ForeignKey("products.id", ondelete="SET NULL"), nullable=True
+    )
+    product_name: Mapped[str] = mapped_column(String(120))
+    price: Mapped[int] = mapped_column(Integer)
+    quantity: Mapped[int] = mapped_column(Integer)
+
+    order: Mapped[Order] = relationship(back_populates="items")

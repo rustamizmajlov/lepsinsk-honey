@@ -1,4 +1,4 @@
-"""Run SkillSwap without Docker: SQLite instead of PostgreSQL, UI and API on one port.
+"""Run the honey shop without Docker: SQLite instead of PostgreSQL, UI and API on one port.
 
     python run_local.py            # http://localhost:8080, opens Brave (or the default browser)
     python run_local.py --no-browser
@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent
 PORT = int(os.getenv("APP_PORT", "8080"))
 URL = f"http://localhost:{PORT}"
 
-os.environ.setdefault("DATABASE_URL", f"sqlite:///{(ROOT / 'skillswap.db').as_posix()}")
+os.environ.setdefault("DATABASE_URL", f"sqlite:///{(ROOT / 'honey.db').as_posix()}")
 sys.path.insert(0, str(ROOT / "backend"))
 
 import uvicorn  # noqa: E402
@@ -44,7 +44,7 @@ def open_browser() -> None:
 
 
 if __name__ == "__main__":
-    print(f"\n  SkillSwap: {URL}  (admin / admin12345, anna / demo123)\n  Остановить: Ctrl+C\n")
+    print(f"\n  Лепсинский мёд: {URL}  (admin / admin12345, demo / demo123)\n  Остановить: Ctrl+C\n")
     if "--no-browser" not in sys.argv:
         threading.Thread(target=open_browser, daemon=True).start()
     uvicorn.run(app, host="127.0.0.1", port=PORT, log_level="warning")

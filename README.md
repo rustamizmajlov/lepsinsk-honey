@@ -53,6 +53,28 @@ docker compose up --build
 | Swagger (документация API) | http://localhost:8080/api/docs |
 | Backend напрямую | http://localhost:8000/api/health |
 
+### Запуск без Docker (Windows, одним кликом)
+
+Если Docker не установлен или не запускается, приложение можно поднять на SQLite вместо PostgreSQL.
+Нужен только [Python 3.10+](https://www.python.org/downloads/).
+
+1. Скачайте проект (`git clone …` или **Code → Download ZIP** и распакуйте).
+2. Дважды кликните **`run-local.bat`**.
+
+Скрипт сам создаст виртуальное окружение в `%USERPROFILE%\.venvs\skillswap`, установит зависимости
+из `requirements-local.txt`, запустит сервер на http://localhost:8080 и откроет его в **Brave**
+(если Brave не установлен — в браузере по умолчанию). Остановить — `Ctrl+C` в окне консоли.
+
+На macOS / Linux:
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements-local.txt
+python run_local.py
+```
+
+Данные хранятся в файле `skillswap.db` в корне проекта; удалите его, чтобы начать с чистой базы.
+
 ### Тестовые аккаунты
 
 | Роль | Логин | Пароль |

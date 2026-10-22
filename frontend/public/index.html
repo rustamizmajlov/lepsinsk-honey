@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SkillSwap — банк времени</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="#/" class="logo">⇄ SkillSwap</a>
+    <nav id="nav"></nav>
+  </header>
+
+  <main id="app" class="container"></main>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <footer class="footer">SkillSwap · обменивайтесь знаниями, а не деньгами · <a href="/api/docs" target="_blank">API</a></footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

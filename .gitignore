@@ -1,9 +1,9 @@
 .env
+honey.db
+*.db
+backend/build/
 __pycache__/
-*.pyc
-.venv/
-venv/
 .idea/
 .vscode/
-*.db
 .DS_Store
+*.bak

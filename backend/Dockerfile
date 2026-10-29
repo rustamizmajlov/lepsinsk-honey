@@ -1,12 +1,15 @@
-FROM python:3.12-slim
+# Этап 1: компилируем C++ сервер с поддержкой PostgreSQL
+FROM gcc:14 AS build
+RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev && rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+COPY third_party ./third_party
+COPY src ./src
+RUN g++ -std=c++17 -O2 -DUSE_POSTGRES -Ithird_party -I/usr/include/postgresql src/*.cpp \
+    -o honey-server -lpq -pthread -static-libstdc++ -static-libgcc
 
-WORKDIR /code
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY app ./app
-
+# Этап 2: маленький образ только с готовой программой
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends libpq5 && rm -rf /var/lib/apt/lists/*
+COPY --from=build /src/honey-server /usr/local/bin/honey-server
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["honey-server"]

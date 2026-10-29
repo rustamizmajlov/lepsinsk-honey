@@ -1,4 +1,4 @@
-// Лепсинский мёд — SPA на чистом JS: hash-роутинг, JWT в localStorage, корзина в localStorage
+// Лепсинский мёд — SPA на чистом JS: hash-роутинг, токен сессии и корзина в localStorage
 const state = {
   token: localStorage.getItem("token"),
   me: null,
@@ -67,6 +67,8 @@ function saveToken(token) {
 }
 
 function logout(redirect = true) {
+  // сервер удаляет сессию, и токен больше не работает
+  if (redirect && state.token) api("/auth/logout", { method: "POST" }).catch(() => {});
   state.token = null;
   state.me = null;
   localStorage.removeItem("token");

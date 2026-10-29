@@ -1,6 +1,6 @@
 # REST API
 
-Базовый путь — `/api`. Интерактивная документация Swagger: http://localhost:8080/api/docs.
+Базовый путь — `/api`. Все ответы — в формате JSON; ошибки приходят как `{"detail": "текст ошибки"}`.
 Защищённые запросы передают токен в заголовке `Authorization: Bearer <access_token>`.
 
 ## Авторизация и профиль
@@ -54,9 +54,12 @@
 ## Пример
 
 ```bash
-TOKEN=$(curl -s -X POST localhost:8080/api/auth/login -H 'Content-Type: application/json' \
-  -d '{"username":"demo","password":"demo123"}' | python -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+# 1. вход — в ответе придёт {"access_token": "...", "token_type": "bearer"}
+curl -X POST localhost:8080/api/auth/login -H 'Content-Type: application/json' \
+  -d '{"username":"demo","password":"demo123"}'
 
+# 2. подставьте полученный токен
+TOKEN=скопированный_access_token
 curl -X POST localhost:8080/api/orders -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"items":[{"product_id":1,"quantity":2}],"customer_name":"Алия","phone":"+77011234567","address":"Алматы","delivery":"post"}'
 ```

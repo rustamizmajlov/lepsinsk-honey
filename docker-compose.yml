@@ -1,4 +1,5 @@
 services:
+  # База данных
   db:
     image: postgres:16-alpine
     container_name: honey-db
@@ -15,13 +16,14 @@ services:
       timeout: 3s
       retries: 10
 
+  # Сервер на C++
   backend:
     build: ./backend
     container_name: honey-backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-honey}:${POSTGRES_PASSWORD:-honey}@db:5432/${POSTGRES_DB:-honey}
-      JWT_SECRET: ${JWT_SECRET:-change-me-to-a-long-random-secret-string}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-honey}:${POSTGRES_PASSWORD:-honey}@db:5432/${POSTGRES_DB:-honey}
+      PORT: "8000"
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@lepsinsk-honey.kz}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin12345}
@@ -32,6 +34,7 @@ services:
     ports:
       - "8000:8000"
 
+  # Интерфейс (nginx отдаёт страницы и пересылает /api на сервер)
   frontend:
     build: ./frontend
     container_name: honey-frontend
